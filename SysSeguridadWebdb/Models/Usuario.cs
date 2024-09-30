@@ -15,19 +15,19 @@ public partial class Usuario
 
     [StringLength(30)]
     [Unicode(false)]
-    public string Nombre { get; set; } = null!;
+    public string Nombre { get; set; }
 
     [StringLength(30)]
     [Unicode(false)]
-    public string Apellido { get; set; } = null!;
+    public string Apellido { get; set; }
 
     [StringLength(25)]
     [Unicode(false)]
-    public string Login { get; set; } = null!;
+    public string Login { get; set; }
 
     [StringLength(32)]
     [Unicode(false)]
-    public string Password { get; set; } = null!;
+    public string Password { get; set; }
 
     public byte Estatus { get; set; }
 

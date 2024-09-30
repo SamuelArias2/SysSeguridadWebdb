@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,7 +38,7 @@ builder.Services.AddSwaggerGen(c =>
     // **************
 });
 
-builder.Services.AddDbContext<BbContext>();
+builder.Services.AddDbContext<BbContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("cadenaSQL")));
 
 string _key = "ESFE2024SecretKeyForTokenAuthentication";
 
@@ -61,15 +62,29 @@ builder.Services.AddAuthentication(x =>
      };
  });
 
+var misReglasCors = "ReglasCors";
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy(name: misReglasCors, builder =>
+    {
+        builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+
+});
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+//if (app.Environment.IsDevelopment())
+//{
+//
+//}
+
+app.UseSwagger();
+
+app.UseSwaggerUI();
+
+app.UseCors(misReglasCors);
 
 app.UseAuthentication();
 

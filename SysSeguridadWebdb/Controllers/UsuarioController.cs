@@ -11,9 +11,11 @@ using SysSeguridadWebdb.Models;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 
 namespace SysSeguridadWebdb.Controllers
 {
+    [EnableCors("ReglasCors")]
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -36,8 +38,14 @@ namespace SysSeguridadWebdb.Controllers
             var option = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             string strUsuario = JsonSerializer.Serialize(pUsuario);
             Usuario usuario = JsonSerializer.Deserialize<Usuario>(strUsuario, option);
-            Usuario usuario_auth = await _context.Usuario.Where(x => x.Login == usuario.Login &&
-            x.Password == usuario.Password).FirstOrDefaultAsync();
+
+            // Encriptar la contraseña ingresada antes de compararla
+            string encriptedPassword = PasswordEncryptor.EncriptarMD5(usuario.Password);
+
+            Usuario usuario_auth = await _context.Usuario
+                .Where(x => x.Login == usuario.Login && x.Password == encriptedPassword)
+                .FirstOrDefaultAsync();
+
             if (usuario_auth != null && usuario_auth.Id > 0 && usuario.Login == usuario_auth.Login)
             {
                 var token = _jwtAuthentication.Authenticate(usuario_auth);
@@ -48,6 +56,7 @@ namespace SysSeguridadWebdb.Controllers
                 return Unauthorized();
             }
         }
+
 
         // GET: api/Usuario
         [HttpGet]
@@ -114,15 +123,20 @@ namespace SysSeguridadWebdb.Controllers
         [HttpPost]
         public async Task<ActionResult<Usuario>> PostUsuario(Usuario usuario)
         {
-          if (_context.Usuario == null)
-          {
-              return Problem("Entity set 'BbContext.Usuario'  is null.");
-          }
+            if (_context.Usuario == null)
+            {
+                return Problem("Entity set 'BbContext.Usuario' is null.");
+            }
+
+            // Encriptar la contraseña antes de guardarla en la base de datos
+            usuario.Password = PasswordEncryptor.EncriptarMD5(usuario.Password);
+
             _context.Usuario.Add(usuario);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetUsuario", new { id = usuario.Id }, usuario);
         }
+
 
         // DELETE: api/Usuario/5
         [HttpDelete("{id}")]
